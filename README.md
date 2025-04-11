@@ -1,2 +1,2 @@
 # Описание
-Игра попади в меня кирпич на html5 boilepraite Помощь в разработке:Deepseek
+Игра попади в кирпич на html5 boilepraite Помощь в разработке:Deepseek
