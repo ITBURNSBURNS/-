@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Попади в меня кирпич PRO</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #target {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.1s;
+            z-index: 10;
+        }
+
+        #target:hover {
+            transform: scale(1.05);
+        }
+
+        #target:active {
+            transform: scale(0.95);
+        }
+
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #timer-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #level-display {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #high-score-display {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: #f1c40f;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 80%;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f1c40f;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #settings-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 15;
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .difficulty-btn {
+            padding: 8px 15px;
+            font-size: 14px;
+            border-radius: 20px;
+        }
+
+        .active-difficulty {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score-display">Очки: 0</div>
+        <div id="timer-display">Время: 30</div>
+        <div id="level-display">Уровень: 1</div>
+        <div id="high-score-display">Рекорд: 0</div>
+
+        <div id="target"></div>
+
+        <div id="start-screen" class="screen">
+            <h1>ПОПАДИ В КИРПИЧ!</h1>
+            <p>Кликай по появляющемуся кирпичу, чтобы зарабатывать очки. Чем выше уровень, тем меньше кирпич и быстрее он двигается!</p>
+            <div class="difficulty-selector">
+                <button id="easy-btn" class="btn difficulty-btn active-difficulty">Легко</button>
+                <button id="medium-btn" class="btn difficulty-btn">Средне</button>
+                <button id="hard-btn" class="btn difficulty-btn">Сложно</button>
+            </div>
+            <button id="start-btn" class="btn">Начать игру</button>
+            <button id="how-to-play-btn" class="btn btn-secondary">Как играть?</button>
+        </div>
+
+        <div id="how-to-play-screen" class="screen" style="display: none;">
+            <h1>Как играть?</h1>
+            <p>◉ Кликай по красному кирпичу, чтобы зарабатывать очки</p>
+            <p>◉ Каждые 10 очков повышают уровень сложности</p>
+            <p>◉ На высоких уровнях кирпич становится меньше и двигается быстрее</p>
+            <p>◉ Игра длится 30 секунд - постарайся набрать максимум очков!</p>
+            <button id="back-to-menu-btn" class="btn">Назад в меню</button>
+        </div>
+
+        <div id="game-over-screen" class="screen" style="display: none;">
+            <h1>Игра окончена!</h1>
+            <p id="final-score-text">Твой счет: 0</p>
+            <p id="high-score-text">Рекорд: 0</p>
+            <button id="restart-btn" class="btn">Играть снова</button>
+            <button id="menu-btn" class="btn btn-secondary">Главное меню</button>
+        </div>
+
+        <div id="settings-panel">
+            <div class="settings-btn" id="sound-btn">🔊</div>
+            <div class="settings-btn" id="music-btn">🎵</div>
+        </div>
+    </div>
+
+    <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" preload="auto"></audio>
+    <audio id="bg-music" loop src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" preload="auto"></audio>
+    <audio id="level-up-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
+    <audio id="game-over-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-lose-2027.mp3" preload="auto"></audio>
+
+    <script>
+        // Элементы игры
+        const gameContainer = document.getElementById('game-container');
+        const target = document.getElementById('target');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const levelDisplay = document.getElementById('level-display');
+        const highScoreDisplay = document.getElementById('high-score-display');
+
+        // Экраны
+        const startScreen = document.getElementById('start-screen');
+        const howToPlayScreen = document.getElementById('how-to-play-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreText = document.getElementById('final-score-text');
+        const highScoreText = document.getElementById('high-score-text');
+
+        // Кнопки
+        const startBtn = document.getElementById('start-btn');
+        const howToPlayBtn = document.getElementById('how-to-play-btn');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const menuBtn = document.getElementById('menu-btn');
+        const soundBtn = document.getElementById('sound-btn');
+        const musicBtn = document.getElementById('music-btn');
+
+        // Кнопки сложности
+        const easyBtn = document.getElementById('easy-btn');
+        const mediumBtn = document.getElementById('medium-btn');
+        const hardBtn = document.getElementById('hard-btn');
+
+        // Звуки
+        const clickSound = document.getElementById('click-sound');
+        const bgMusic = document.getElementById('bg-music');
+        const levelUpSound = document.getElementById('level-up-sound');
+        const gameOverSound = document.getElementById('game-over-sound');
+
+        // Переменные игры
+        let score = 0;
+        let highScore = localStorage.getItem('brickHighScore') || 0;
+        let timeLeft = 30;
+        let level = 1;
+        let gameInterval;
+        let timerInterval;
+        let gameActive = false;
+        let targetSpeed = 1000;
+        let targetSize = 80;
+
+        // Настройки
+        let soundEnabled = true;
+        let musicEnabled = true;
+        let difficulty = 'easy'; // 'easy', 'medium', 'hard'
+
+        // Размеры игрового поля
+        const gameWidth = gameContainer.offsetWidth;
+        const gameHeight = gameContainer.offsetHeight;
+
+        // Инициализация
+        highScoreDisplay.textContent = `Рекорд: ${highScore}`;
+
+        // Установка сложности
+        function setDifficulty(diff) {
+            difficulty = diff;
+
+            // Удаляем активный класс со всех кнопок
+            easyBtn.classList.remove('active-difficulty');
+            mediumBtn.classList.remove('active-difficulty');
+            hardBtn.classList.remove('active-difficulty');
+
+            // Добавляем активный класс выбранной кнопке
+            if (diff === 'easy') {
+                easyBtn.classList.add('active-difficulty');
+                targetSpeed = 1000;
+                targetSize = 80;
+            } else if (diff === 'medium') {
+                mediumBtn.classList.add('active-difficulty');
+                targetSpeed = 700;
+                targetSize = 60;
+            } else if (diff === 'hard') {
+                hardBtn.classList.add('active-difficulty');
+                targetSpeed = 500;
+                targetSize = 40;
+            }
+
+            // Обновляем размер цели, если игра активна
+            if (gameActive) {
+                target.style.width = `${targetSize}px`;
+                target.style.height = `${targetSize/2}px`;
+            }
+        }
+
+        // Создание частиц эффекта
+        function createParticles(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.backgroundColor = `hsl(${Math.random() * 60 + 30}, 100%, 50%)`;
+
+                gameContainer.appendChild(particle);
+
+                // Анимация частиц
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const size = Math.random() * 8 + 4;
+
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+
+                let posX = x;
+                let posY = y;
+                let opacity = 1;
+
+                const animate = () => {
+                    posX += Math.cos(angle) * speed;
+                    posY += Math.sin(angle) * speed;
+                    opacity -= 0.03;
+
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${posY}px`;
+                    particle.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        particle.remove();
+                    }
+                };
+
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // Перемещение цели
+        function moveTarget() {
+            if (!gameActive) return;
+
+            const maxX = gameWidth - target.offsetWidth;
+            const maxY = gameHeight - target.offsetHeight;
+
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+
+            // Анимация перемещения
+            target.style.transition = `left ${targetSpeed/1000}s linear, top ${targetSpeed/1000}s linear`;
+            target.style.left = `${randomX}px`;
+            target.style.top = `${randomY}px`;
+
+            // После завершения перемещения убираем transition, чтобы клик был мгновенным
+            setTimeout(() => {
+                target.style.transition = 'none';
+            }, targetSpeed);
+        }
+
+        // Обработка клика по цели
+        function handleTargetClick() {
+            if (!gameActive) return;
+
+            // Увеличиваем счет
+            score++;
+            scoreDisplay.textContent = `Очки: ${score}`;
+
+            // Проверяем уровень
+            const newLevel = Math.floor(score / 10) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                levelDisplay.textContent = `Уровень: ${level}`;
+
+                // Увеличиваем сложность
+                if (difficulty === 'easy') {
+                    targetSpeed = Math.max(300, 1000 - level * 70);
+                    targetSize = Math.max(30, 80 - level * 5);
+                } else if (difficulty === 'medium') {
+                    targetSpeed = Math.max(200, 700 - level * 50);
+                    targetSize = Math.max(20, 60 - level * 4);
+                } else if (difficulty === 'hard') {
+                    targetSpeed = Math.max(100, 500 - level * 40);
+                    targetSize = Math.max(10, 40 - level * 3);
+                }
+
+                target.style.width = `${targetSize}px`;
+                target.style.height = `${targetSize/2}px`;
+
+                // Проигрываем звук повышения уровня
+                if (soundEnabled) {
+                    levelUpSound.currentTime = 0;
+                    levelUpSound.play();
+                }
+            }
+
+            // Создаем эффект частиц
+            const rect = target.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            createParticles(
+                rect.left - containerRect.left + rect.width/2,
+                rect.top - containerRect.top + rect.height/2
+            );
+
+            // Проигрываем звук клика
+            if (soundEnabled) {
+                clickSound.currentTime = 0;
+                clickSound.play();
+            }
+
+            // Перемещаем цель
+            moveTarget();
+        }
+
+        // Обновление таймера
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = `Время: ${timeLeft}`;
+
+            // Меняем цвет при малом времени
+            if (timeLeft <= 5) {
+                timerDisplay.style.color = '#ff0000';
+                timerDisplay.style.animation = 'pulse 0.5s infinite';
+            }
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        // Начало игры
+        function startGame() {
+            // Сброс значений
+            score = 0;
+            timeLeft = 30;
+            level = 1;
+
+            // Обновление интерфейса
+            scoreDisplay.textContent = `Очки: ${score}`;
+            timerDisplay.textContent = `Время: ${timeLeft}`;
+            levelDisplay.textContent = `Уровень: ${level}`;
+            timerDisplay.style.color = '#ffffff';
+            timerDisplay.style.animation = 'none';
+
+            // Установка сложности
+            setDifficulty(difficulty);
+
+            // Показываем игровое поле
+            startScreen.style.display = 'none';
+            howToPlayScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+
+            // Устанавливаем размер цели
+            target.style.width = `${targetSize}px`;
+            target.style.height = `${targetSize/2}px`;
+
+            // Запускаем игру
+            gameActive = true;
+            moveTarget();
+
+            // Запускаем таймер
+            timerInterval = setInterval(updateTimer, 1000);
+
+            // Запускаем музыку
+            if (musicEnabled) {
+                bgMusic.currentTime = 0;
+                bgMusic.play();
+            }
+        }
+
+        // Завершение игры
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+
+            // Останавливаем музыку
+            bgMusic.pause();
+
+            // Проверяем рекорд
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('brickHighScore', highScore);
+                highScoreDisplay.textContent = `Рекорд: ${highScore}`;
+            }
+
+            // Показываем экран завершения
+            finalScoreText.textContent = `Твой счет: ${score}`;
+            highScoreText.textContent = `Рекорд: ${highScore}`;
+            gameOverScreen.style.display = 'flex';
+
+            // Проигрываем звук завершения
+            if (soundEnabled) {
+                gameOverSound.currentTime = 0;
+                gameOverSound.play();
+            }
+        }
+
+        // Управление звуком
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // Управление музыкой
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            musicBtn.textContent = musicEnabled ? '🎵' : '🔇';
+
+            if (musicEnabled && gameActive) {
+                bgMusic.play();
+            } else {
+                bgMusic.pause();
+            }
+        }
+
+        // Назначение обработчиков событий
+        target.addEventListener('click', handleTargetClick);
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        menuBtn.addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        });
+        howToPlayBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            howToPlayScreen.style.display = 'flex';
+        });
+        backToMenuBtn.addEventListener('click', () => {
+            howToPlayScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        });
+        soundBtn.addEventListener('click', toggleSound);
+        musicBtn.addEventListener('click', toggleMusic);
+        easyBtn.addEventListener('click', () => setDifficulty('easy'));
+        mediumBtn.addEventListener('click', () => setDifficulty('medium'));
+        hardBtn.addEventListener('click', () => setDifficulty('hard'));
+
+        // Инициализация сложности
+        setDifficulty('easy');
+    </script>
+</body>
+</html>
+
